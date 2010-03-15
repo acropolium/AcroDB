@@ -1,32 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Linq;
 using System.Linq;
 using System.Linq.Expressions;
 using AcroDB.Attributes;
+using NoRM;
 
-namespace AcroDB.MsSql
+namespace AcroDB.MongoDb
 {
-    [ProviderSettings(BaseEntityType = typeof(MsSqlEntity))]
-    public class MsSqlDataProvider<TEntity, TInterface> : BaseEntityProvider<TEntity, TInterface>
+    [ProviderSettings(BaseEntityType = typeof(MongoDbEntity))]
+    public class MongoDbDataProvider<TEntity, TInterface> : BaseEntityProvider<TEntity, TInterface>
         where TInterface : class
-        where TEntity : MsSqlEntity, TInterface, new()
+        where TEntity : MongoDbEntity, TInterface, new()
     {
-        public MsSqlDataProvider(IDataContext dataContext) : base(dataContext)
+        public MongoDbDataProvider(IDataContext dataContext)
+            : base(dataContext)
         {
         }
 
-        private Table<TEntity> Table
+        private IQueryable<TEntity> Table
         {
             get
             {
-                return DC<MsSqlDataContext>().Context.GetTable<TEntity>();
+                return DC<MongoDbDataContext>().Context.GetTable<TEntity>();
+            }
+        }
+
+        private MongoCollection<TEntity> Collection
+        {
+            get
+            {
+                return DC<MongoDbDataContext>().Context.GetCollection<TEntity>();
             }
         }
 
         protected override bool Insert(TInterface instanceOfEntity)
         {
-            Table.InsertOnSubmit((TEntity)instanceOfEntity);
+            Collection.Insert((TEntity)instanceOfEntity);
             return true;
         }
 
@@ -34,7 +43,8 @@ namespace AcroDB.MsSql
         {
             try
             {
-                Table.Attach((TEntity)instanceOfEntity);
+                var entity = (TEntity) instanceOfEntity;
+                Collection.UpdateOne(entity, entity);
                 return true;
             }
             catch (Exception)
@@ -45,7 +55,7 @@ namespace AcroDB.MsSql
 
         public override bool Delete(TInterface interfaceOfEntity)
         {
-            DC<MsSqlDataContext>().Context.GetTable<TEntity>().DeleteOnSubmit((TEntity)interfaceOfEntity);
+            Collection.Delete((TEntity)interfaceOfEntity);
             return true;
         }
 
@@ -82,7 +92,7 @@ namespace AcroDB.MsSql
 
         private IEnumerable<TEntity> GetFiltered(Expression<Func<TEntity, bool>> predicate, Expression<Func<TEntity, object>> orderPredicate, bool orderAscending)
         {
-            var collection = predicate == null ? Table.AsQueryable() : Table.AsQueryable().Where(predicate);
+            var collection = predicate == null ? Table : Table.Where(predicate);
             if (orderPredicate != null)
             {
                 if (orderAscending)

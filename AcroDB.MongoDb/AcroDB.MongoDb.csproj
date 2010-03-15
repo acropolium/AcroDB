@@ -2,19 +2,18 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{0898D56A-7D9E-4E06-A12D-96182378C265}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{FBE4603D-5E0E-4B31-81BE-FC0A71082350}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AcroDBTest</RootNamespace>
-    <AssemblyName>AcroDBTest</AssemblyName>
+    <RootNamespace>AcroDB.MongoDb</RootNamespace>
+    <AssemblyName>AcroDB.MongoDb</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <PlatformTarget>x86</PlatformTarget>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,8 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <PlatformTarget>x86</PlatformTarget>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -33,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NoRM">
+      <HintPath>..\..\NoRM\NoRM\bin\Debug\NoRM.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -41,18 +42,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="MongoDbDataContext.cs" />
+    <Compile Include="MongoDbDataProvider.cs" />
+    <Compile Include="MongoDbEntity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AcroDB.MongoDb\AcroDB.MongoDb.csproj">
-      <Project>{FBE4603D-5E0E-4B31-81BE-FC0A71082350}</Project>
-      <Name>AcroDB.MongoDb</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\AcroDB.MsSql\AcroDB.MsSql.csproj">
-      <Project>{1C8FC1AF-A551-4613-A235-AC4E00D609B9}</Project>
-      <Name>AcroDB.MsSql</Name>
-    </ProjectReference>
     <ProjectReference Include="..\AcroDB\AcroDB.csproj">
       <Project>{8A9F4453-6FEA-4D6F-BD79-4DF5F5E93232}</Project>
       <Name>AcroDB</Name>
