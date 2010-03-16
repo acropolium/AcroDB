@@ -2,6 +2,7 @@
 using System.Reflection;
 using AcroDB;
 using AcroDB.Attributes;
+using AcroDB.MongoDb;
 using AcroDB.MsSql;
 
 namespace AcroDBTest
@@ -12,6 +13,7 @@ namespace AcroDBTest
     {
         Guid ID { get; set; }
         string Name { get; set; }
+        string Email { get; set; }
         string Surname { get; set; }
     }
 
@@ -37,14 +39,20 @@ namespace AcroDBTest
 
     class Program
     {
+        static string[] SettingsCallBack(string name)
+        {
+            if (name == "MongoDb")
+                return new[] { @"acrodblibtest", @"localhost", "27017", @"" };
+            if (name == "MsSql")
+                return new[] { @"server=OLEKSIY-DEVPC\SQLEXPRESS;Database=acrodbtest;Trusted_Connection=True;" };
+            return new string[0];
+        }
         static void Main()
         {
-            AcroDataContext.DefaultDataProvider = typeof (MsSqlDataProvider<,>);
-            AcroDataContext.DefaultDataContext = typeof(MsSqlDataContext);
-            AcroDataContext.DefaultDataContextParams = new [] { @"server=OLEKSIY-DEVPC\SQLEXPRESS;Database=acrodbtest;Trusted_Connection=True;" };
-            //AcroDataContext.DefaultDataProvider = typeof (MongoDbDataProvider<,>);
-            //AcroDataContext.DefaultDataContext = typeof(MongoDbDataContext);
-            //AcroDataContext.DefaultDataContextParams = new[] { @"acrodblibtest", @"localhost", "27017", @"" };
+            DataContextFactory.SettingsCallback = SettingsCallBack;
+            DataContextFactory.Instance.ScanAssembly(typeof (MsSqlDataContext).Assembly).ScanAssembly(
+                typeof (MongoDbDataContext).Assembly);
+            AcroDataContext.DefaultDataContext = DataContextFactory.Instance.Get("MsSql");
             AcroDataContext.ResetEntityMaps();
             AcroDataContext.ScanAssemblyForEntities(Assembly.GetExecutingAssembly());
             AcroDataContext.PerformMigrations();
@@ -54,6 +62,7 @@ namespace AcroDBTest
                 var usr = manager.Provide<IUserEntity>().Create();
                 usr.Surname = DateTime.Now.ToLongDateString();
                 usr.Name = DateTime.Now.ToLongTimeString();
+                usr.Email = DateTime.Now.ToString();
                 manager.Provide<IUserEntity>().Save(usr);
                 manager.SubmitChanges();
                 foreach (var u in manager.Provide<IUserEntity>().GetFiltered(x => x.Name.Equals("20:30:51"), x => x.ID))

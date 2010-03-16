@@ -33,6 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AcroUtils, Version=1.0.0.2, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="SubSonic.Core">
       <HintPath>..\..\SubSonic 3 Final\Binaries\SubSonic.Core.dll</HintPath>
     </Reference>

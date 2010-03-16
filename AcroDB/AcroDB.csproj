@@ -55,10 +55,12 @@
     <Compile Include="BaseDataContext.cs" />
     <Compile Include="AcroEntity.cs" />
     <Compile Include="BaseEntityProvider.cs" />
+    <Compile Include="DataContextFactory.cs" />
     <Compile Include="EntityFactory\EntityBuilder.cs" />
     <Compile Include="IDataContext.cs" />
     <Compile Include="IEntityDataProvider.cs" />
     <Compile Include="IIdEntity.cs" />
+    <Compile Include="InMemory\DataContextPublisher.cs" />
     <Compile Include="InMemory\InMemoryDataContext.cs" />
     <Compile Include="InMemory\InMemoryDataProvider.cs" />
     <Compile Include="LinqKit\ExpandableQuery.cs" />
