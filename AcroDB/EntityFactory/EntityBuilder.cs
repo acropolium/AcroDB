@@ -6,6 +6,7 @@ using System.Reflection.Emit;
 using System.Threading;
 using AcroDB.Attributes;
 using AcroUtils.Patterns;
+using SubSonic.SqlGeneration.Schema;
 
 namespace AcroDB.EntityFactory
 {
@@ -51,7 +52,7 @@ namespace AcroDB.EntityFactory
             var attr = interfaceType.GetCustomAttributes(typeof(AcroDbEntityAttribute), true).FirstOrDefault() as AcroDbEntityAttribute;
             if (attr == null)
                 return null;
-            var parentType = (attr.ParentType == typeof (BaseEntity))
+            var parentType = (attr.ParentType == typeof (AcroEntity))
                                  ? (baseEntityType ?? attr.ParentType)
                                  : attr.ParentType;
             var interfaces = new List<Type>(attr.InterfacesToImplement);
@@ -142,7 +143,7 @@ namespace AcroDB.EntityFactory
             else
             {
                 var setInitializedMethod =
-                    typeof(BaseEntity).GetMethod("SetNullableItem",
+                    typeof(AcroEntity).GetMethod("SetNullableItem",
                                                       BindingFlags.Instance | BindingFlags.NonPublic).
                         MakeGenericMethod(rtype.GetGenericArguments()[0]);
                 currSetIl.Emit(OpCodes.Ldarg_0);
@@ -161,6 +162,46 @@ namespace AcroDB.EntityFactory
             property.SetSetMethod(currSetPropMthdBldr);
             builder.DefineMethodOverride(currGetPropMthdBldr, propertyInfo.GetGetMethod());
             builder.DefineMethodOverride(currSetPropMthdBldr, propertyInfo.GetSetMethod());
+
+            foreach (var attribute in propertyInfo.GetCustomAttributes(true))
+            {
+                if (attribute is AcroColumnIsPrimaryKeyAttribute)
+                {
+                    property.SetCustomAttribute(
+                        new CustomAttributeBuilder(typeof (SubSonicPrimaryKeyAttribute).GetConstructor(new Type[0]),
+                                                   new object[0]));
+                }
+                else if (attribute is AcroColumnIgnoreStorageAttribute)
+                {
+                    property.SetCustomAttribute(
+                        new CustomAttributeBuilder(typeof (SubSonicIgnoreAttribute).GetConstructor(new Type[0]),
+                                                   new object[0]));
+                }
+                else if (attribute is AcroColumnLongStringAttribute)
+                {
+                    property.SetCustomAttribute(
+                        new CustomAttributeBuilder(typeof (SubSonicLongStringAttribute).GetConstructor(new Type[0]),
+                                                   new object[0]));
+                }
+                else if (attribute is AcroColumnStringLengthAttribute)
+                {
+                    property.SetCustomAttribute(
+                        new CustomAttributeBuilder(
+                            typeof (SubSonicStringLengthAttribute).GetConstructor(new[] {typeof (int)}),
+                            new object[] {((AcroColumnStringLengthAttribute) attribute).Length}));
+                }
+                else if (attribute is AcroColumnNumericPrecisionAttribute)
+                {
+                    property.SetCustomAttribute(
+                        new CustomAttributeBuilder(
+                            typeof (SubSonicNumericPrecisionAttribute).GetConstructor(new[] {typeof (int), typeof (int)}),
+                            new object[]
+                                {
+                                    ((AcroColumnNumericPrecisionAttribute) attribute).Precision,
+                                    ((AcroColumnNumericPrecisionAttribute) attribute).Scale
+                                }));
+                }
+            }
         }
 
         public void Initialize() { }

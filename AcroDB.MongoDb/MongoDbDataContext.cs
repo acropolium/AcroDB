@@ -10,10 +10,13 @@ namespace AcroDB.MongoDb
 {
     public class MongoDbDataContext : BaseDataContext
     {
-        public class MongoDbSession : IDisposable
+        public abstract class MongoDbSession : IDisposable
         {
             readonly MongoQueryProvider _provider;
-            public MongoDbSession(string dbName, string server, string port, string options)
+            protected MongoDbSession(string dbName) : this(dbName, @"localhost") { }
+            protected MongoDbSession(string dbName, string server) : this(dbName, server, @"27017") { }
+            protected MongoDbSession(string dbName, string server, string port) : this(dbName, server, port, @"") { }
+            protected MongoDbSession(string dbName, string server, string port, string options)
             {
                 _provider = new MongoQueryProvider(dbName, server, port, options);
             }
@@ -78,8 +81,13 @@ namespace AcroDB.MongoDb
                                                     TypeAttributes.AnsiClass |
                                                     TypeAttributes.BeforeFieldInit |
                                                     TypeAttributes.AutoLayout, typeof(MongoDbSession));
-                var ctor1 = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis, new[] { typeof(string), typeof(string), typeof(string), typeof(string) });
-                var il = ctor1.GetILGenerator();
+                var il =
+                    typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis,
+                                                  new[]
+                                                      {
+                                                          typeof (string), typeof (string), typeof (string),
+                                                          typeof (string)
+                                                      }).GetILGenerator();
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldarg_2);
@@ -87,6 +95,43 @@ namespace AcroDB.MongoDb
                 il.Emit(OpCodes.Ldarg_S, 4);
                 il.Emit(OpCodes.Call, typeof(MongoDbSession).GetConstructor(new[] { typeof(string), typeof(string), typeof(string), typeof(string) }));
                 il.Emit(OpCodes.Ret);
+                
+                il =
+                    typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis,
+                                                  new[]
+                                                      {
+                                                          typeof (string), typeof (string), typeof (string)
+                                                      }).GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldarg_3);
+                il.Emit(OpCodes.Call, typeof(MongoDbSession).GetConstructor(new[] { typeof(string), typeof(string), typeof(string) }));
+                il.Emit(OpCodes.Ret);
+
+                il =
+                    typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis,
+                                                  new[]
+                                                      {
+                                                          typeof (string), typeof (string)
+                                                      }).GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Call, typeof(MongoDbSession).GetConstructor(new[] { typeof(string), typeof(string) }));
+                il.Emit(OpCodes.Ret);
+
+                il =
+                    typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.HasThis,
+                                                  new[]
+                                                      {
+                                                          typeof (string)
+                                                      }).GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Call, typeof(MongoDbSession).GetConstructor(new[] { typeof(string) }));
+                il.Emit(OpCodes.Ret);
+
                 foreach (var type in AcroDataContext.GetInterfacesTypes<MongoDbDataContext>())
                 {
                     var retType = typeof(IQueryable<>).MakeGenericType(new[] { type.Value });
@@ -117,11 +162,9 @@ namespace AcroDB.MongoDb
 
         private readonly MongoDbSession _dc;
 
-        public MongoDbDataContext(object[] parameters) : base(parameters)
+        public MongoDbDataContext(string[] parameters) : base(parameters)
         {
-            _dc =
-                (MongoDbSession)
-                Activator.CreateInstance(GenerateDataContextType(), parameters[0].ToString(), parameters[1].ToString(), parameters[2].ToString(), parameters[3].ToString());
+            _dc = (MongoDbSession)Activator.CreateInstance(GenerateDataContextType(), parameters);
         }
 
         public MongoDbSession Context

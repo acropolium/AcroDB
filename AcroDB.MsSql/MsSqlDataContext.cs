@@ -10,6 +10,7 @@ using AcroDB.Attributes;
 
 namespace AcroDB.MsSql
 {
+    [AutoMigrationSupported("System.Data.SqlClient")]
     public class MsSqlDataContext : BaseDataContext
     {
         private static Type _dcType;
@@ -77,11 +78,9 @@ namespace AcroDB.MsSql
 
         private readonly DataContext _dc;
 
-        public MsSqlDataContext(object[] parameters) : base(parameters)
+        public MsSqlDataContext(string[] parameters) : base(parameters)
         {
-            _dc =
-                (DataContext)
-                Activator.CreateInstance(GenerateDataContextType(), parameters[0].ToString(), MappingSource);
+            _dc = (DataContext) Activator.CreateInstance(GenerateDataContextType(), parameters[0], MappingSource);
         }
 
         private static XmlMappingSource _source;
@@ -102,6 +101,11 @@ namespace AcroDB.MsSql
             }
         }
 
+        private static string GetValidName(string name)
+        {
+            return String.Format("{0}{1}", name.Substring(0, name.Length - 1), name.EndsWith("y") ? "ies" : "s");
+        }
+
         private static string GenerateXmlMap()
         {
             var sb = new StringBuilder();
@@ -116,9 +120,11 @@ namespace AcroDB.MsSql
                     interfaceType.GetCustomAttributes(typeof (AcroDbEntityAttribute), true).FirstOrDefault();
                 if (dbAttr == null)
                     continue;
-                var name = String.IsNullOrEmpty(dbAttr.Name)
-                               ? (interfaceType.Name[0] == 'I' ? interfaceType.Name.Substring(1) : interfaceType.Name)
-                               : dbAttr.Name;
+                var name = GetValidName(String.IsNullOrEmpty(dbAttr.Name)
+                                            ? (interfaceType.Name[0] == 'I'
+                                                   ? interfaceType.Name.Substring(1)
+                                                   : interfaceType.Name)
+                                            : dbAttr.Name);
                 sb.AppendFormat("<Table Name=\"{0}\" Member=\"{1}\">", name, entityType.FullName);
                 sb.AppendLine();
                 sb.AppendFormat("<Type Name=\"{0}\">", entityType.FullName);
@@ -130,9 +136,9 @@ namespace AcroDB.MsSql
                 {
                     sb.Append("<Column");
                     sb.AppendFormat(" Name=\"{0}\" Member=\"{0}\" Storage=\"_{0}\"", column.Name);
-                    if (column.GetCustomAttributes(typeof(AcroColumnIsPrimaryKeyAttribute), true).Length > 0)
+                    if (column.GetCustomAttributes(typeof(AcroColumnIsPrimaryKeyAttribute), true).Length > 0 || column.Name.Equals("ID") || column.Name.Equals("Key") || column.Name.Equals(entityType.Name + "ID"))
                         sb.Append(" IsPrimaryKey=\"true\"");
-                    if (column.GetCustomAttributes(typeof(AcroColumnCanBeNullAttribute), true).Length > 0)
+                    if (column.PropertyType.IsGenericType && column.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
                         sb.Append(" CanBeNull=\"true\"");
                     sb.AppendLine(" />");
                 }

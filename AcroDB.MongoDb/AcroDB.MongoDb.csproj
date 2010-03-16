@@ -44,7 +44,6 @@
   <ItemGroup>
     <Compile Include="MongoDbDataContext.cs" />
     <Compile Include="MongoDbDataProvider.cs" />
-    <Compile Include="MongoDbEntity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

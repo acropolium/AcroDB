@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Reflection;
+using SubSonic.SqlGeneration.Schema;
 
 namespace AcroDB
 {
-    public abstract class BaseEntity : IIdEntity
+    public abstract class AcroEntity : IIdEntity
     {
+        [SubSonicIgnore]
+        public AcroDataContext AcroContext { get; set; }
+
         private PropertyInfo _idPropertyInfo;
         private PropertyInfo IdPropertyInfo
         {
@@ -15,6 +19,7 @@ namespace AcroDB
             }
         }
 
+        [SubSonicIgnore]
         public IDataContext OwnerDataContext
         {
             get; set;

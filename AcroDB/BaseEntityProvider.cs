@@ -7,7 +7,7 @@ namespace AcroDB
 {
     public abstract class BaseEntityProvider<TEntity, TInterface> : IDisposable, IEntityDataProvider<TInterface>
         where TInterface : class
-        where TEntity : BaseEntity, TInterface, new()
+        where TEntity : AcroEntity, TInterface, new()
     {
         protected IDataContext DataContext
         {
@@ -91,5 +91,50 @@ namespace AcroDB
         public abstract IEnumerable<TInterface> GetFiltered(Expression<Func<TInterface, bool>> predicate, Expression<Func<TInterface, object>> orderPredicate, bool orderAscending);
 
         public virtual void Dispose() { }
+
+        #region Expression Converter
+        private class TypeModifier<TInput> : LinqKit.ExpressionVisitor
+        {
+            private readonly ParameterExpression _param;
+            public TypeModifier(ParameterExpression param)
+            {
+                _param = param;
+            }
+
+            public Expression Go(Expression expression)
+            {
+                return Visit(expression);
+            }
+
+            protected override Expression VisitParameter(ParameterExpression p)
+            {
+                return ((p.Type.Equals(typeof(TInput)) || (p.Type.Equals(typeof(IIdEntity)))) && p.Name.Equals(_param.Name)) ? _param : base.VisitParameter(p);
+            }
+        }
+
+        protected IEnumerable<TEntity> GetFilteredReal(IQueryable<TEntity> queryable, Expression<Func<TInterface, bool>> predicate, Expression<Func<TInterface, object>> orderPredicate, bool orderAscending)
+        {
+            var originalPredicate = GetRealPredicate<TInterface, TEntity, bool>(predicate);
+            var originalOrderPredicate = GetRealPredicate<TInterface, TEntity, object>(orderPredicate);
+            var collection = predicate == null ? queryable : (queryable.Where(originalPredicate));
+            if (orderPredicate != null)
+            {
+                if (orderAscending)
+                    collection.OrderBy(originalOrderPredicate.Compile());
+                else
+                    collection.OrderByDescending(originalOrderPredicate.Compile());
+            }
+            return collection;
+        }
+
+        protected static Expression<Func<TOutput, TParamType>> GetRealPredicate<TInput, TOutput, TParamType>(Expression<Func<TInput, TParamType>> predicate)
+        {
+            if (predicate == null)
+                return null;
+            var param = Expression.Parameter(typeof(TOutput), predicate.Parameters[0].Name);
+            var temp = (Expression<Func<TInput, TParamType>>)(new TypeModifier<TInput>(param)).Go(predicate);
+            return Expression.Lambda<Func<TOutput, TParamType>>(temp.Body, new[] { param });
+        }
+        #endregion
     }
 }

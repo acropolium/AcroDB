@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using AcroDB.Attributes;
+using AcroDB.AutoMigration;
 using AcroDB.EntityFactory;
 using AcroDB.InMemory;
 
@@ -44,7 +45,7 @@ namespace AcroDB
 
         public static Type DefaultDataContext = typeof(InMemoryDataContext);
         public static Type DefaultDataProvider = typeof(InMemoryDataProvider<,>);
-        public static object[] DefaultDataContextParams = new object[0];
+        public static string[] DefaultDataContextParams = new string[0];
 
         ///<summary>
         ///
@@ -101,11 +102,15 @@ namespace AcroDB
 
         public static IEnumerable<KeyValuePair<Type, Type>> GetInterfacesTypes<TDataContextType>()
         {
-            var dcType = typeof (TDataContextType);
+            return GetInterfacesTypes(typeof (TDataContextType));
+        }
+
+        public static IEnumerable<KeyValuePair<Type, Type>> GetInterfacesTypes(Type contextType)
+        {
             return from description in EntityDescription
                    where
-                       (description.Value.DataContext == null && DefaultDataContext == dcType) ||
-                       (description.Value.DataContext != null && description.Value.DataContext == dcType)
+                       (description.Value.DataContext == null && DefaultDataContext == contextType) ||
+                       (description.Value.DataContext != null && description.Value.DataContext == contextType)
                    select new KeyValuePair<Type, Type>(description.Key, description.Value.Entity);
         }
 
@@ -113,6 +118,22 @@ namespace AcroDB
         {
             foreach (var entityInterface in asm.GetTypes().Where(t => t.IsInterface && t.GetCustomAttributes(typeof(AcroDbEntityAttribute), true).Length > 0))
                 RegisterEntityInterface(entityInterface);
+        }
+
+        public static void PerformMigrations()
+        {
+            var contexts = new List<Type>();
+            foreach (var context in
+                EntityDescription.Select(description => description.Value.DataContext ?? DefaultDataContext).Where(context => !contexts.Contains(context) && context.GetCustomAttributes(typeof(AutoMigrationSupportedAttribute), true).Any()))
+            {
+                contexts.Add(context);
+            }
+            foreach (var context in contexts)
+            {
+                var migrationAttr = (AutoMigrationSupportedAttribute)context.GetCustomAttributes(typeof (AutoMigrationSupportedAttribute), true).First();
+                var migrator = (IMigrator) Activator.CreateInstance(migrationAttr.MigrationProvider);
+                migrator.Migrate(DefaultDataContextParams[0], migrationAttr.DbProviderName, GetInterfacesTypes(context).Select(v => v.Value));
+            }
         }
 
         private readonly object _dataContextLock = new object();

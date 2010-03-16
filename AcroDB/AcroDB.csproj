@@ -34,6 +34,9 @@
     <Reference Include="AcroUtils">
       <HintPath>..\..\AcroCMS\AcroUtils\bin\Debug\AcroUtils.dll</HintPath>
     </Reference>
+    <Reference Include="SubSonic.Core">
+      <HintPath>..\..\SubSonic 3 Final\Binaries\SubSonic.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -44,10 +47,13 @@
   <ItemGroup>
     <Compile Include="AcroDataContext.cs" />
     <Compile Include="Attributes\AcroDbEntity.cs" />
+    <Compile Include="Attributes\AutoMigrationSupported.cs" />
     <Compile Include="Attributes\ColumnAttributes.cs" />
     <Compile Include="Attributes\ProviderSettings.cs" />
+    <Compile Include="AutoMigration\IMigrator.cs" />
+    <Compile Include="AutoMigration\SubSonicMigrationProvider.cs" />
     <Compile Include="BaseDataContext.cs" />
-    <Compile Include="BaseEntity.cs" />
+    <Compile Include="AcroEntity.cs" />
     <Compile Include="BaseEntityProvider.cs" />
     <Compile Include="EntityFactory\EntityBuilder.cs" />
     <Compile Include="IDataContext.cs" />

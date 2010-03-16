@@ -40,7 +40,7 @@ namespace AcroDB.Attributes
             CustomDataContext = null;
             CustomEntity = null;
             CustomDataProvider = null;
-            ParentType = typeof(BaseEntity);
+            ParentType = typeof(AcroEntity);
             InterfacesToImplement = new Type[0];
         }
     }

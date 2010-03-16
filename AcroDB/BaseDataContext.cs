@@ -2,7 +2,7 @@
 {
     public abstract class BaseDataContext : IDataContext
     {
-        protected BaseDataContext(object[] parameters) { }
+        protected BaseDataContext(string[] parameters) { }
 
         public abstract void SubmitChanges();
         public virtual void Dispose() { }

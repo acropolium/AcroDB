@@ -7,7 +7,7 @@ namespace AcroDB.InMemory
     {
         private readonly IDictionary<Type, IList<object>> _storage = new Dictionary<Type, IList<object>>();
 
-        public InMemoryDataContext(object[] parameters) : base(parameters)
+        public InMemoryDataContext(string[] parameters) : base(parameters)
         {
         }
 
