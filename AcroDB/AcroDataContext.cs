@@ -42,7 +42,7 @@ namespace AcroDB
             return (IDataContext)Activator.CreateInstance(DefaultDataContext.DataContext, (object)(DefaultDataContext.DefaultParameters));
         }
 
-        public static DataContextDescription DefaultDataContext;
+        public static IDataContextDescription DefaultDataContext;
 
         ///<summary>
         ///
@@ -119,6 +119,11 @@ namespace AcroDB
 
         public static void PerformMigrations()
         {
+            PerformMigrations(null);
+        }
+
+        public static void PerformMigrations(Action<MigratorResult, Type> callbackOnChanges)
+        {
             var contexts = new List<Type>();
             foreach (var context in
                 EntityDescription.Select(description => description.Value.DataContext ?? DefaultDataContext.DataContext).Where(context => !contexts.Contains(context) && context.GetCustomAttributes(typeof(AutoMigrationSupportedAttribute), true).Any()))
@@ -130,7 +135,7 @@ namespace AcroDB
                 var migrationAttr = (AutoMigrationSupportedAttribute)context.GetCustomAttributes(typeof (AutoMigrationSupportedAttribute), true).First();
                 var migrator = (IMigrator) Activator.CreateInstance(migrationAttr.MigrationProvider);
                 var info = DataContextFactory.Instance.Get(migrationAttr.DbProviderName);
-                migrator.Migrate(info.DefaultParameters[0], info.ConnectionProviderType, GetInterfacesTypes(context).Select(v => v.Value));
+                migrator.Migrate(info.DefaultParameters[0], info.ConnectionProviderType, GetInterfacesTypes(context).Select(v => v.Value), callbackOnChanges);
             }
         }
 

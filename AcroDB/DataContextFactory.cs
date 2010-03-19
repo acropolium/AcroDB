@@ -2,21 +2,29 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using AcroUtils.Patterns;
 
 namespace AcroDB
 {
-    public class DataContextFactory : Singleton<DataContextFactory>, IInitializer
+    public sealed class DataContextFactory
     {
-        private IDictionary<string, DataContextDescription> _descriptions;
+        private readonly IDictionary<string, DataContextDescription> _descriptions = new Dictionary<string, DataContextDescription>();
         public static Func<string, string[]> SettingsCallback;
 
-        public void Initialize()
+        #region Safe threaded singleton
+        private DataContextFactory() { }
+        public static DataContextFactory Instance
         {
-            if (_descriptions != null)
-                return;
-            _descriptions = new Dictionary<string, DataContextDescription>();
+            get
+            {
+                return ThreadSafeSingletonHelper.SafeInstance;
+            }
         }
+        private class ThreadSafeSingletonHelper
+        {
+            static ThreadSafeSingletonHelper() { }
+            internal static readonly DataContextFactory SafeInstance = new DataContextFactory();
+        }
+        #endregion
 
         public DataContextFactory ScanAssembly(Assembly assembly)
         {
@@ -36,22 +44,22 @@ namespace AcroDB
             return this;
         }
 
-        public DataContextDescription Get(string contextProviderName)
+        public IDataContextDescription Get(string contextProviderName)
         {
             DataContextDescription temp;
             return _descriptions.TryGetValue(contextProviderName, out temp) ? temp : null;
         }
 
-        public IEnumerable<DataContextDescription> All
+        public IEnumerable<IDataContextDescription> All
         {
             get
             {
-                return _descriptions.Values;
+                return _descriptions.Values.Select(x => (IDataContextDescription)x);
             }
         }
     }
 
-    public class DataContextDescription
+    internal class DataContextDescription : IDataContextDescription
     {
         public string[] DefaultParameters { get; set; }
         public Type DataContext { get; set; }
@@ -60,8 +68,17 @@ namespace AcroDB
         public string Name { get; set; }
     }
 
+    public interface IDataContextDescription
+    {
+        string[] DefaultParameters { get; set; }
+        Type DataContext { get; set; }
+        Type DataProvider { get; set; }
+        string ConnectionProviderType { get; set; }
+        string Name { get; set; }
+    }
+
     public interface IDataContextPublisher
     {
-        void FillDataContextDescription(DataContextDescription description);
+        void FillDataContextDescription(IDataContextDescription description);
     }
 }

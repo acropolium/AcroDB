@@ -27,7 +27,7 @@ namespace AcroDBTest
     }
 
     [AcroDbEntity]
-    public interface Users
+    public interface User
     {
         Guid ID { get; set; }
         string Title { get; set; }
@@ -35,6 +35,14 @@ namespace AcroDBTest
         string Body { get; set; }
         [AcroColumnLongString]
         string BodyLong { get; set; }
+    }
+
+    [AcroDbEntity]
+    public interface Role
+    {
+        Guid ID { get; set; }
+        [AcroColumnStringLength(60)]
+        string Title { get; set; }
     }
 
     class Program

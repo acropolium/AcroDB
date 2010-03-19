@@ -5,13 +5,28 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
 using AcroDB.Attributes;
-using AcroUtils.Patterns;
 using SubSonic.SqlGeneration.Schema;
 
 namespace AcroDB.EntityFactory
 {
-    public class EntityBuilder : Singleton<EntityBuilder>, IInitializer
+    public class EntityBuilder
     {
+        #region Safe threaded singleton
+        private EntityBuilder() { }
+        public static EntityBuilder Instance
+        {
+            get
+            {
+                return ThreadSafeSingletonHelper.SafeInstance;
+            }
+        }
+        private class ThreadSafeSingletonHelper
+        {
+            static ThreadSafeSingletonHelper() { }
+            internal static readonly EntityBuilder SafeInstance = new EntityBuilder();
+        }
+        #endregion
+
         private ModuleBuilder _moduleBldr;
         private AssemblyBuilder _assemblyBldr;
         private static readonly Random Random = new Random();
@@ -204,7 +219,6 @@ namespace AcroDB.EntityFactory
             }
         }
 
-        public void Initialize() { }
         public static Type Build(Type interfaceType, Type baseEntityType, string customName, Action<Type, TypeBuilder> beforeCreateTypeCallback)
         {
             return Instance.BuildEntity(interfaceType, baseEntityType,

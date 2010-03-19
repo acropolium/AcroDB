@@ -2,7 +2,7 @@
 {
     public class DataContextPublisher : IDataContextPublisher
     {
-        public void FillDataContextDescription(DataContextDescription description)
+        public void FillDataContextDescription(IDataContextDescription description)
         {
             description.Name = "InMemory";
             description.ConnectionProviderType = null;

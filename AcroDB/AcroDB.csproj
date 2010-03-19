@@ -31,9 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AcroUtils">
-      <HintPath>..\..\AcroCMS\AcroUtils\bin\Debug\AcroUtils.dll</HintPath>
-    </Reference>
     <Reference Include="SubSonic.Core">
       <HintPath>..\..\SubSonic 3 Final\Binaries\SubSonic.Core.dll</HintPath>
     </Reference>
