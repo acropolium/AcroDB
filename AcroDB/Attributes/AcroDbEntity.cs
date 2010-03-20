@@ -2,6 +2,7 @@
 
 namespace AcroDB.Attributes
 {
+    [AttributeUsage(AttributeTargets.Interface, AllowMultiple = false)]
     public class AcroDbEntityAttribute : Attribute
     {
         public string Name
