@@ -40,7 +40,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataContextPublisher.cs" />
     <Compile Include="MsSqlDataContext.cs" />
     <Compile Include="MsSqlDataProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

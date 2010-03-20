@@ -126,15 +126,17 @@ namespace AcroDB
         {
             var contexts = new List<Type>();
             foreach (var context in
-                EntityDescription.Select(description => description.Value.DataContext ?? DefaultDataContext.DataContext).Where(context => !contexts.Contains(context) && context.GetCustomAttributes(typeof(AutoMigrationSupportedAttribute), true).Any()))
+                EntityDescription
+                  .Select(description => description.Value.DataContext ?? DefaultDataContext.DataContext)
+                  .Where(context => !contexts.Contains(context) && ((AcroDbContextAttribute)context.GetCustomAttributes(typeof(AcroDbContextAttribute), true).Single()).AllowAutoMigration))
             {
                 contexts.Add(context);
             }
             foreach (var context in contexts)
             {
-                var migrationAttr = (AutoMigrationSupportedAttribute)context.GetCustomAttributes(typeof (AutoMigrationSupportedAttribute), true).First();
-                var migrator = (IMigrator) Activator.CreateInstance(migrationAttr.MigrationProvider);
-                var info = DataContextFactory.Instance.Get(migrationAttr.DbProviderName);
+                var migrationAttr = (AcroDbContextAttribute)context.GetCustomAttributes(typeof(AcroDbContextAttribute), true).First();
+                var migrator = (IMigrator) Activator.CreateInstance(migrationAttr.CustomAutoMigrationProvider);
+                var info = DataContextFactory.Instance.Get(migrationAttr.UniqueName);
                 migrator.Migrate(info.DefaultParameters[0], info.ConnectionProviderType, GetInterfacesTypes(context).Select(v => v.Value), callbackOnChanges);
             }
         }

@@ -42,7 +42,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataContextPublisher.cs" />
     <Compile Include="MongoDbDataContext.cs" />
     <Compile Include="MongoDbDataProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

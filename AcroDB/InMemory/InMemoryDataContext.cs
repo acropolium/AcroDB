@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using AcroDB.Attributes;
 
 namespace AcroDB.InMemory
 {
+    [AcroDbContext("InMemory", typeof(InMemoryDataProvider<,>))]
     public class InMemoryDataContext : BaseDataContext
     {
         private readonly IDictionary<Type, IList<object>> _storage = new Dictionary<Type, IList<object>>();

@@ -3,11 +3,13 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading;
+using AcroDB.Attributes;
 using NoRM;
 using NoRM.Linq;
 
 namespace AcroDB.MongoDb
 {
+    [AcroDbContext("MongoDb", typeof(MongoDbDataProvider<,>))]
     public class MongoDbDataContext : BaseDataContext
     {
         public abstract class MongoDbSession : IDisposable

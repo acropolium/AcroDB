@@ -10,7 +10,7 @@ using AcroDB.Attributes;
 
 namespace AcroDB.MsSql
 {
-    [AutoMigrationSupported("MsSql")]
+    [AcroDbContext("MsSql", typeof(MsSqlDataProvider<,>), @"System.Data.SqlClient", true)]
     public class MsSqlDataContext : BaseDataContext
     {
         private static Type _dcType;

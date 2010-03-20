@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using AcroDB.Attributes;
 
 namespace AcroDB
 {
@@ -28,15 +29,17 @@ namespace AcroDB
 
         public DataContextFactory ScanAssembly(Assembly assembly)
         {
-            foreach (var publisherType in from type in assembly.GetTypes()
-                                          where type.GetInterfaces().Any(i => i == typeof(IDataContextPublisher))
+            foreach (var contextType in from type in assembly.GetTypes()
+                                          where type.GetCustomAttributes(typeof(AcroDbContextAttribute), true).Length > 0
                                           select type)
             {
-                var publisher = Activator.CreateInstance(publisherType) as IDataContextPublisher;
-                if (publisher == null)
+                var dcd = new DataContextDescription {DataContext = contextType};
+                var contextDescription = contextType.GetCustomAttributes(typeof(AcroDbContextAttribute), true).FirstOrDefault() as AcroDbContextAttribute;
+                if (contextDescription == null)
                     continue;
-                var dcd = new DataContextDescription();
-                publisher.FillDataContextDescription(dcd);
+                dcd.ConnectionProviderType = contextDescription.LowLevelConnectionProviderType;
+                dcd.DataProvider = contextDescription.DataProvider;
+                dcd.Name = contextDescription.UniqueName;
                 if (SettingsCallback != null)
                     dcd.DefaultParameters = SettingsCallback(dcd.Name);
                 _descriptions[dcd.Name] = dcd;
@@ -75,10 +78,5 @@ namespace AcroDB
         Type DataProvider { get; set; }
         string ConnectionProviderType { get; set; }
         string Name { get; set; }
-    }
-
-    public interface IDataContextPublisher
-    {
-        void FillDataContextDescription(IDataContextDescription description);
     }
 }
