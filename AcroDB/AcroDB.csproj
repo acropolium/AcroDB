@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="A.cs" />
     <Compile Include="AcroDataContext.cs" />
     <Compile Include="Attributes\AcroDbContext.cs" />
     <Compile Include="Attributes\AcroDbEntity.cs" />
