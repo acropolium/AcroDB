@@ -102,6 +102,12 @@ namespace AcroDB
             return GetInterfacesTypes(typeof (TDataContextType));
         }
 
+        public static Type MapInterface<TInterface>()
+        {
+            var desc = GetEntityDescription<TInterface>();
+            return desc == null ? null : desc.Value.Entity;
+        }
+
         public static IEnumerable<KeyValuePair<Type, Type>> GetInterfacesTypes(Type contextType)
         {
             return from description in EntityDescription
@@ -122,7 +128,30 @@ namespace AcroDB
             PerformMigrations(null);
         }
 
-        public static void PerformMigrations(Action<MigratorResult, Type> callbackOnChanges)
+        private class MigrationAutoCallBack
+        {
+            private readonly IList<KeyValuePair<AcroDbMigrationAttribute, Type>> _types;
+
+            public MigrationAutoCallBack(IEnumerable<Type> interfaces)
+            {
+                _types = (from i in interfaces
+                          where i.GetCustomAttributes(typeof (AcroDbMigrationAttribute), true).Any()
+                          select
+                              new KeyValuePair<AcroDbMigrationAttribute, Type>(
+                              (AcroDbMigrationAttribute)
+                              i.GetCustomAttributes(typeof (AcroDbMigrationAttribute), true).First(), i)).ToList();
+            }
+
+            internal void CallBack(MigratorResult migratorResult, Type @interface)
+            {
+                var temp = @interface == null ? _types : _types.Where(i => i.Value == @interface);
+                var events = temp.Where(e => (e.Key.WhenToFire & migratorResult) == migratorResult && (e.Value != null)).Select(v => v.Key);
+                foreach (var action in events)
+                    action.Call(migratorResult, @interface);
+            }
+        }
+
+        public static void PerformMigrations(Action<MigratorResult, Type> callbackChanges)
         {
             var contexts = new List<Type>();
             foreach (var context in
@@ -137,7 +166,12 @@ namespace AcroDB
                 var migrationAttr = (AcroDbContextAttribute)context.GetCustomAttributes(typeof(AcroDbContextAttribute), true).First();
                 var migrator = (IMigrator) Activator.CreateInstance(migrationAttr.CustomAutoMigrationProvider);
                 var info = DataContextFactory.Instance.Get(migrationAttr.UniqueName);
-                migrator.Migrate(info.DefaultParameters[0], info.ConnectionProviderType, GetInterfacesTypes(context).Select(v => v.Value), callbackOnChanges);
+                var interfaces = GetInterfacesTypes(context).Select(v => v.Value).ToList();
+                var callback = new MigrationAutoCallBack(interfaces);
+                var callbackOnChanges = callbackChanges == null
+                                            ? callback.CallBack
+                                            : callback.CallBack + callbackChanges;
+                migrator.Migrate(info.DefaultParameters[0], info.ConnectionProviderType, interfaces, callbackOnChanges);
             }
         }
 
