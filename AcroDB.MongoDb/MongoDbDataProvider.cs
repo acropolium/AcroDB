@@ -10,8 +10,8 @@ namespace AcroDB.MongoDb
         where TInterface : class
         where TEntity : AcroEntity, TInterface, new()
     {
-        public MongoDbDataProvider(IDataContext dataContext)
-            : base(dataContext)
+        public MongoDbDataProvider(IDataContextProvider acroDataContext, IDataContext dataContext)
+            : base(acroDataContext, dataContext)
         {
         }
 

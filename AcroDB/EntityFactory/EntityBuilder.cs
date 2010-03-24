@@ -80,6 +80,10 @@ namespace AcroDB.EntityFactory
                                                        TypeAttributes.BeforeFieldInit |
                                                        TypeAttributes.AutoLayout, parentType,
                                                        interfaces.ToArray());
+            typeBuilder.SetCustomAttribute(
+                new CustomAttributeBuilder(
+                    typeof (SubSonicTableNameOverrideAttribute).GetConstructor(new[] {typeof (string)}),
+                    new object[] {name}));
             foreach (var property in interfaceType.GetProperties())
                 AddAutoProperty(typeBuilder, property);
             if (beforeCreateTypeCallback != null)
@@ -192,10 +196,16 @@ namespace AcroDB.EntityFactory
                         new CustomAttributeBuilder(typeof (SubSonicIgnoreAttribute).GetConstructor(new Type[0]),
                                                    new object[0]));
                 }
-                else if (attribute is AcroColumnLongStringAttribute)
+                else if (attribute is AcroColumnStringLongAttribute)
                 {
                     property.SetCustomAttribute(
                         new CustomAttributeBuilder(typeof (SubSonicLongStringAttribute).GetConstructor(new Type[0]),
+                                                   new object[0]));
+                }
+                else if (attribute is AcroColumnStringCanBeNullAttribute)
+                {
+                    property.SetCustomAttribute(
+                        new CustomAttributeBuilder(typeof(SubSonicNullStringAttribute).GetConstructor(new Type[0]),
                                                    new object[0]));
                 }
                 else if (attribute is AcroColumnStringLengthAttribute)

@@ -8,11 +8,18 @@ using AcroDB.EntityFactory;
 
 namespace AcroDB
 {
-    public class AcroDataContext : IDisposable
+    public interface IDataContextProvider
+    {
+        IEntityDataProvider<TEntityInterface> Provide<TEntityInterface>() where TEntityInterface : class;
+        void SubmitChanges();
+    }
+
+    public class AcroDataContext : IDataContextProvider, IDisposable
     {
         private readonly IDataContext _currentDataContext;
         private readonly Dictionary<Type, object> _entitiyProviders = new Dictionary<Type, object>();
-        private readonly string _lockerObject;
+        //private readonly string _lockerObject;
+        private readonly object _lockerObject = new object();
 
         ///<summary>
         ///
@@ -21,7 +28,7 @@ namespace AcroDB
         public AcroDataContext(IDataContext currentDataContext)
         {
             _currentDataContext = currentDataContext;
-            _lockerObject = String.Format("AcroDataContext{0}{1}", Math.Abs(DateTime.Now.ToFileTime()), Math.Abs((new Random()).Next()));
+            //_lockerObject = String.Format("AcroDataContext{0}{1}", Math.Abs(DateTime.Now.ToFileTime()), Math.Abs((new Random()).Next()));
         }
 
         ///<summary>
@@ -39,7 +46,9 @@ namespace AcroDB
 
         private static IDataContext CreateDefaultDataContext()
         {
-            return (IDataContext)Activator.CreateInstance(DefaultDataContext.DataContext, (object)(DefaultDataContext.DefaultParameters));
+            return (IDataContext) DefaultDataContext.DataContext
+                                      .GetConstructor(new[] {typeof (string[])})
+                                      .Invoke(new object[] {DefaultDataContext.DefaultParameters});
         }
 
         public static IDataContextDescription DefaultDataContext;
@@ -102,6 +111,11 @@ namespace AcroDB
             return GetInterfacesTypes(typeof (TDataContextType));
         }
 
+        public static IEnumerable<KeyValuePair<Type, Type>> GetInterfacesTypes<TDataContextType>(bool skipGenericTypes)
+        {
+            return GetInterfacesTypes(typeof (TDataContextType), skipGenericTypes);
+        }
+
         public static Type MapInterface<TInterface>()
         {
             var desc = GetEntityDescription<TInterface>();
@@ -110,11 +124,19 @@ namespace AcroDB
 
         public static IEnumerable<KeyValuePair<Type, Type>> GetInterfacesTypes(Type contextType)
         {
-            return from description in EntityDescription
-                   where
-                       (description.Value.DataContext == null && DefaultDataContext.DataContext == contextType) ||
-                       (description.Value.DataContext != null && description.Value.DataContext == contextType)
-                   select new KeyValuePair<Type, Type>(description.Key, description.Value.Entity);
+            return GetInterfacesTypes(contextType, false);
+        }
+
+        public static IEnumerable<KeyValuePair<Type, Type>> GetInterfacesTypes(Type contextType, bool skipGenericTypes)
+        {
+            var enu = from description in EntityDescription
+                      where
+                          (description.Value.DataContext == null && DefaultDataContext.DataContext == contextType) ||
+                          (description.Value.DataContext != null && description.Value.DataContext == contextType)
+                      select new KeyValuePair<Type, Type>(description.Key, description.Value.Entity);
+            if (skipGenericTypes)
+                enu = enu.Where(i => !i.Key.GetCustomAttributes(typeof (AcroGenericEntityAttribute), true).Any());
+            return enu;
         }
 
         public static void ScanAssemblyForEntities(Assembly asm)
@@ -154,24 +176,25 @@ namespace AcroDB
         public static void PerformMigrations(Action<MigratorResult, Type> callbackChanges)
         {
             var contexts = new List<Type>();
-            foreach (var context in
-                EntityDescription
-                  .Select(description => description.Value.DataContext ?? DefaultDataContext.DataContext)
-                  .Where(context => !contexts.Contains(context) && ((AcroDbContextAttribute)context.GetCustomAttributes(typeof(AcroDbContextAttribute), true).Single()).AllowAutoMigration))
+            foreach (var context in EntityDescription.Select(description => description.Value.DataContext ?? DefaultDataContext.DataContext))
             {
+                if (contexts.Contains(context) || !((AcroDbContextAttribute)context.GetCustomAttributes(typeof(AcroDbContextAttribute), true).Single()).AllowAutoMigration)
+                    continue;
                 contexts.Add(context);
             }
             foreach (var context in contexts)
             {
-                var migrationAttr = (AcroDbContextAttribute)context.GetCustomAttributes(typeof(AcroDbContextAttribute), true).First();
+                var migrationAttr =
+                    (AcroDbContextAttribute) context.GetCustomAttributes(typeof (AcroDbContextAttribute), true).First();
                 var migrator = (IMigrator) Activator.CreateInstance(migrationAttr.CustomAutoMigrationProvider);
                 var info = DataContextFactory.Instance.Get(migrationAttr.UniqueName);
-                var interfaces = GetInterfacesTypes(context).Select(v => v.Value).ToList();
+                var interfaces = GetInterfacesTypes(context).Where(i => !i.Key.GetCustomAttributes(typeof(AcroGenericEntityAttribute), true).Any()).Select(v => v.Value).ToList();
                 var callback = new MigrationAutoCallBack(interfaces);
                 var callbackOnChanges = callbackChanges == null
                                             ? callback.CallBack
                                             : callback.CallBack + callbackChanges;
-                migrator.Migrate(info.DefaultParameters[0], info.ConnectionProviderType, interfaces, callbackOnChanges);
+                migrator.Migrate(info.DefaultParameters[0], info.ConnectionProviderType, interfaces,
+                                 callbackOnChanges);
             }
         }
 
@@ -216,13 +239,13 @@ namespace AcroDB
                           (Activator.CreateInstance(
                               DefaultDataContext.DataProvider.MakeGenericType(
                                   containerDescription.Value.Entity,
-                                  type), ShotForDataContext<TEntityInterface>(containerDescription)));
+                                  type), this, ShotForDataContext<TEntityInterface>(containerDescription)));
                 }
                 else
                 {
                     val = (IEntityDataProvider<TEntityInterface>)
                           (Activator.CreateInstance(containerDescription.Value.Provider,
-                                                    ShotForDataContext<TEntityInterface>(containerDescription)));
+                                                    this, ShotForDataContext<TEntityInterface>(containerDescription)));
                 }
                 _entitiyProviders[type] = val;
                 return val;

@@ -45,4 +45,7 @@ namespace AcroDB.Attributes
             InterfacesToImplement = new Type[0];
         }
     }
+
+    [AttributeUsage(AttributeTargets.Interface, AllowMultiple = false)]
+    public class AcroGenericEntityAttribute : Attribute { }
 }

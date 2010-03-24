@@ -1,10 +1,17 @@
-﻿namespace AcroDB.Helpers
+﻿using System;
+
+namespace AcroDB.Helpers
 {
     public static class A
     {
-        public static AcroDataContext AcroContext(this object objInterface)
+        public static IDataContextProvider AcroContext(this object objInterface)
         {
-            return ((AcroEntity)objInterface).AcroContext;
+            if (!(objInterface is AcroEntity))
+                throw new Exception("Object is not AcroEntity");
+            var context = ((AcroEntity)objInterface).DataContextProvider;
+            if (context == null)
+                throw new Exception("AcroContext was not attached to object");
+            return context;
         }
     }
 }

@@ -33,7 +33,7 @@ namespace AcroDBTest
         string Title { get; set; }
         [AcroColumnStringLength(60)]
         string Body { get; set; }
-        [AcroColumnLongString]
+        [AcroColumnStringLong]
         string BodyLong { get; set; }
     }
 

@@ -48,7 +48,7 @@ namespace AcroDB.MsSql
                 il.Emit(OpCodes.Ldarg_2);
                 il.Emit(OpCodes.Call, typeof(DataContext).GetConstructor(new[] { typeof(string), typeof(MappingSource) }));
                 il.Emit(OpCodes.Ret);
-                foreach (var type in AcroDataContext.GetInterfacesTypes<MsSqlDataContext>())
+                foreach (var type in AcroDataContext.GetInterfacesTypes<MsSqlDataContext>(true))
                 {
                     var retType = typeof(Table<>).MakeGenericType(new[] { type.Value });
                     var method = typeBuilder.DefineMethod("get_" + type.Value.Name, MethodAttributes.Private |
@@ -101,17 +101,12 @@ namespace AcroDB.MsSql
             }
         }
 
-        private static string GetValidName(string name)
-        {
-            return String.Format("{0}{1}", name.Substring(0, name.Length - 1), name.EndsWith("y") ? "ies" : "s");
-        }
-
         private static string GenerateXmlMap()
         {
             var sb = new StringBuilder();
             sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\" ?>");
             sb.AppendLine("<Database Name=\"MemoryDB\" xmlns=\"http://schemas.microsoft.com/linqtosql/mapping/2007\">");
-            foreach (var type in AcroDataContext.GetInterfacesTypes<MsSqlDataContext>())
+            foreach (var type in AcroDataContext.GetInterfacesTypes<MsSqlDataContext>(true))
             {
                 var interfaceType = type.Key;
                 var entityType = type.Value;
@@ -120,11 +115,11 @@ namespace AcroDB.MsSql
                     interfaceType.GetCustomAttributes(typeof (AcroDbEntityAttribute), true).FirstOrDefault();
                 if (dbAttr == null)
                     continue;
-                var name = GetValidName(String.IsNullOrEmpty(dbAttr.Name)
+                var name = String.IsNullOrEmpty(dbAttr.Name)
                                             ? (interfaceType.Name[0] == 'I'
                                                    ? interfaceType.Name.Substring(1)
                                                    : interfaceType.Name)
-                                            : dbAttr.Name);
+                                            : dbAttr.Name;
                 sb.AppendFormat("<Table Name=\"{0}\" Member=\"{1}\">", name, entityType.FullName);
                 sb.AppendLine();
                 sb.AppendFormat("<Type Name=\"{0}\">", entityType.FullName);

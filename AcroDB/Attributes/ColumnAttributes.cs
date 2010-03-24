@@ -7,7 +7,9 @@ namespace AcroDB.Attributes
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public class AcroColumnIgnoreStorageAttribute : Attribute { }
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-    public class AcroColumnLongStringAttribute : Attribute { }
+    public class AcroColumnStringCanBeNullAttribute : Attribute { }
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class AcroColumnStringLongAttribute : Attribute { }
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public class AcroColumnStringLengthAttribute : Attribute
     {

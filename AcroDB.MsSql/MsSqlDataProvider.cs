@@ -10,7 +10,8 @@ namespace AcroDB.MsSql
         where TInterface : class
         where TEntity : AcroEntity, TInterface, new()
     {
-        public MsSqlDataProvider(IDataContext dataContext) : base(dataContext)
+        public MsSqlDataProvider(IDataContextProvider acroDataContext, IDataContext dataContext)
+            : base(acroDataContext, dataContext)
         {
         }
 

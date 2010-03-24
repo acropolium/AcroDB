@@ -7,7 +7,7 @@ namespace AcroDB
     public abstract class AcroEntity : IIdEntity
     {
         [SubSonicIgnore]
-        public AcroDataContext AcroContext { get; set; }
+        public IDataContextProvider DataContextProvider { get; set; }
 
         private PropertyInfo _idPropertyInfo;
         private PropertyInfo IdPropertyInfo
@@ -17,12 +17,6 @@ namespace AcroDB
                 return _idPropertyInfo ??
                        (_idPropertyInfo = GetType().GetProperty("ID", BindingFlags.Public | BindingFlags.Instance));
             }
-        }
-
-        [SubSonicIgnore]
-        public IDataContext OwnerDataContext
-        {
-            get; set;
         }
 
         public Guid GetEntityId()

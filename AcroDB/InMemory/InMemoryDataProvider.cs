@@ -9,7 +9,8 @@ namespace AcroDB.InMemory
         where TInterface : class
         where TEntity : AcroEntity, TInterface, new()
     {
-        public InMemoryDataProvider(IDataContext dataContext) : base(dataContext)
+        public InMemoryDataProvider(IDataContextProvider acroDataContext, IDataContext dataContext)
+            : base(acroDataContext, dataContext)
         {
         }
 

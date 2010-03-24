@@ -14,9 +14,14 @@ namespace AcroDB
             get; private set;
         }
 
+        protected IDataContextProvider AcroDataContext
+        {
+            get; private set;
+        }
+
         protected void ModifyEntity(TEntity entity)
         {
-            entity.OwnerDataContext = DataContext;
+            entity.DataContextProvider = AcroDataContext;
         }
 
         protected TDataContext DC<TDataContext>()
@@ -25,8 +30,9 @@ namespace AcroDB
             return (TDataContext) DataContext;
         }
 
-        protected BaseEntityProvider(IDataContext dataContext)
+        protected BaseEntityProvider(IDataContextProvider acroDataContext, IDataContext dataContext)
         {
+            AcroDataContext = acroDataContext;
             DataContext = dataContext;
         }
 
