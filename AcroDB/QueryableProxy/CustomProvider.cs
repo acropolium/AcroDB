@@ -58,7 +58,7 @@ namespace AcroDB.QueryableProxy
 
             private static object AnalyzeExpression(MethodCallExpression expression)
             {
-                if (expression.Arguments.Count < 1)
+                if (expression.Arguments.Count < 2)
                     return null;
                 var arg = expression.Arguments[1];
                 if (arg is UnaryExpression)
@@ -152,12 +152,18 @@ namespace AcroDB.QueryableProxy
                                                                                      });
         }
 
+        private TInterface ModifyEntity(object entity)
+        {
+            var e = ((TEntity)entity);
+            e.DataContextProvider = _acroDataContext;
+            return e;
+        }
 
         public TResult Execute<TResult>(Expression expression)
         {
             var q = _queryable;
             object result = null;
-            foreach (var lambda in new LambdaFinder().Get(expression, "Where", "OrderBy", "OrderByDescending", "Skip", "Take", "Count"))
+            foreach (var lambda in new LambdaFinder().Get(expression, "Where", "OrderBy", "OrderByDescending", "Skip", "Take", "Count", "FirstOrDefault", "First", "SingleOrDefault", "Single"))
             {
                 if (lambda.Key.Equals("Where"))
                 {
@@ -188,6 +194,26 @@ namespace AcroDB.QueryableProxy
                 if (lambda.Key.Equals("Count"))
                 {
                     result = q.Count();
+                    continue;
+                }
+                if (lambda.Key.Equals("FirstOrDefault"))
+                {
+                    result = ModifyEntity(q.FirstOrDefault());
+                    continue;
+                }
+                if (lambda.Key.Equals("First"))
+                {
+                    result = ModifyEntity(q.First());
+                    continue;
+                }
+                if (lambda.Key.Equals("SingleOrDefault"))
+                {
+                    result = ModifyEntity(q.SingleOrDefault());
+                    continue;
+                }
+                if (lambda.Key.Equals("Single"))
+                {
+                    result = ModifyEntity(q.Single());
                     continue;
                 }
             }

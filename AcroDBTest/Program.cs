@@ -75,6 +75,7 @@ namespace AcroDBTest
                 usr.Email = DateTime.Now.ToString();
                 manager.Provide<IUserEntity>().Save(usr);
                 manager.SubmitChanges();*/
+                Console.WriteLine(manager.Provide<IUserEntity>().Query.FirstOrDefault());
                 foreach (var u in manager.Provide<IUserEntity>().Query.Skip(5).Take(5))
                 {
                     Console.WriteLine(u.Name);
