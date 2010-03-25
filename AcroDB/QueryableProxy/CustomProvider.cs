@@ -154,7 +154,9 @@ namespace AcroDB.QueryableProxy
 
         private TInterface ModifyEntity(object entity)
         {
-            var e = ((TEntity)entity);
+            var e = entity as TEntity;
+            if (e == null)
+                return default(TInterface);
             e.DataContextProvider = _acroDataContext;
             return e;
         }
@@ -163,6 +165,7 @@ namespace AcroDB.QueryableProxy
         {
             var q = _queryable;
             object result = null;
+            bool resultAssigned = false;
             foreach (var lambda in new LambdaFinder().Get(expression, "Where", "OrderBy", "OrderByDescending", "Skip", "Take", "Count", "FirstOrDefault", "First", "SingleOrDefault", "Single"))
             {
                 if (lambda.Key.Equals("Where"))
@@ -194,30 +197,35 @@ namespace AcroDB.QueryableProxy
                 if (lambda.Key.Equals("Count"))
                 {
                     result = q.Count();
+                    resultAssigned = true;
                     continue;
                 }
                 if (lambda.Key.Equals("FirstOrDefault"))
                 {
                     result = ModifyEntity(q.FirstOrDefault());
+                    resultAssigned = true;
                     continue;
                 }
                 if (lambda.Key.Equals("First"))
                 {
                     result = ModifyEntity(q.First());
+                    resultAssigned = true;
                     continue;
                 }
                 if (lambda.Key.Equals("SingleOrDefault"))
                 {
                     result = ModifyEntity(q.SingleOrDefault());
+                    resultAssigned = true;
                     continue;
                 }
                 if (lambda.Key.Equals("Single"))
                 {
                     result = ModifyEntity(q.Single());
+                    resultAssigned = true;
                     continue;
                 }
             }
-            if (result == null)
+            if (!resultAssigned && result == null)
                 result = q;
             return (TResult)result;
         }
