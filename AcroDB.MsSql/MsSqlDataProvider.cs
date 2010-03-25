@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Linq;
 using System.Linq;
-using System.Linq.Expressions;
 
 namespace AcroDB.MsSql
 {
@@ -48,13 +46,9 @@ namespace AcroDB.MsSql
             return true;
         }
 
-        public override IEnumerable<TInterface> GetFiltered(Expression<Func<TInterface, bool>> predicate, Expression<Func<TInterface, object>> orderPredicate, bool orderAscending)
+        protected override IQueryable<TEntity> Queryable
         {
-            foreach (var item in GetFilteredReal(Table.AsQueryable(), predicate, orderPredicate, orderAscending))
-            {
-                ModifyEntity(item);
-                yield return item;
-            }
+            get { return Table.AsQueryable(); }
         }
     }
 }

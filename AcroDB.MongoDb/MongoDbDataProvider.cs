@@ -57,13 +57,9 @@ namespace AcroDB.MongoDb
             return true;
         }
 
-        public override IEnumerable<TInterface> GetFiltered(Expression<Func<TInterface, bool>> predicate, Expression<Func<TInterface, object>> orderPredicate, bool orderAscending)
+        protected override IQueryable<TEntity> Queryable
         {
-            foreach (var item in GetFilteredReal(Table, predicate, orderPredicate, orderAscending))
-            {
-                ModifyEntity(item);
-                yield return item;
-            }
+            get { return Table; }
         }
     }
 }

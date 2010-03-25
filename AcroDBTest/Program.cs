@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using AcroDB;
 using AcroDB.Attributes;
+using AcroDB.Helpers;
 using AcroDB.MongoDb;
 using AcroDB.MsSql;
 
@@ -66,16 +68,17 @@ namespace AcroDBTest
             AcroDataContext.PerformMigrations();
 
             using (var manager = AcroDataContext.Go)
-            {
+            {/*
                 var usr = manager.Provide<IUserEntity>().Create();
                 usr.Surname = DateTime.Now.ToLongDateString();
                 usr.Name = DateTime.Now.ToLongTimeString();
                 usr.Email = DateTime.Now.ToString();
                 manager.Provide<IUserEntity>().Save(usr);
-                manager.SubmitChanges();
-                foreach (var u in manager.Provide<IUserEntity>().GetFiltered(x => x.Name.Equals("20:30:51"), x => x.ID))
+                manager.SubmitChanges();*/
+                foreach (var u in manager.Provide<IUserEntity>().Query.Skip(5).Take(5))
                 {
                     Console.WriteLine(u.Name);
+                    //Console.WriteLine(u.AcroContext().Provide<IUserEntity>().Query.Count());
                 }
             }
             Console.ReadKey();

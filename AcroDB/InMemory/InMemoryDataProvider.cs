@@ -31,6 +31,11 @@ namespace AcroDB.InMemory
             return true;
         }
 
+        protected override IQueryable<TEntity> Queryable
+        {
+            get { return DC<InMemoryDataContext>().Get<TInterface>().OfType<TEntity>().AsQueryable(); }
+        }
+
         public override IEnumerable<TInterface> GetFiltered(Expression<Func<TInterface, bool>> predicate, Expression<Func<TInterface, object>> orderPredicate, bool orderAscending)
         {
             var c = DC<InMemoryDataContext>().Get<TInterface>();

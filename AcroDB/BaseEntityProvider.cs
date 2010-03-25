@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using AcroDB.QueryableProxy;
 
 namespace AcroDB
 {
@@ -17,11 +18,6 @@ namespace AcroDB
         protected IDataContextProvider AcroDataContext
         {
             get; private set;
-        }
-
-        protected void ModifyEntity(TEntity entity)
-        {
-            entity.DataContextProvider = AcroDataContext;
         }
 
         protected TDataContext DC<TDataContext>()
@@ -63,6 +59,7 @@ namespace AcroDB
         {
             return GetFiltered(predicate).Aggregate(true, (current, entity) => current & Delete(entity));
         }
+
         public virtual TInterface Get(Guid id)
         {
             var pe = Expression.Parameter(typeof(TInterface), "entityObject");
@@ -94,53 +91,23 @@ namespace AcroDB
         {
             return GetFiltered(predicate, orderPredicate, true);
         }
-        public abstract IEnumerable<TInterface> GetFiltered(Expression<Func<TInterface, bool>> predicate, Expression<Func<TInterface, object>> orderPredicate, bool orderAscending);
+        public virtual IEnumerable<TInterface> GetFiltered(Expression<Func<TInterface, bool>> predicate, Expression<Func<TInterface, object>> orderPredicate, bool orderAscending)
+        {
+            var q = Query;
+            if (predicate != null)
+                q = q.Where(predicate);
+            if (orderPredicate != null)
+                return orderAscending ? q.OrderBy(orderPredicate.Compile()) : q.OrderByDescending(orderPredicate.Compile());
+            return q;
+        }
 
         public virtual void Dispose() { }
 
-        #region Expression Converter
-        private class TypeModifier<TInput> : LinqKit.ExpressionVisitor
+        protected abstract IQueryable<TEntity> Queryable { get; }
+
+        public IQueryable<TInterface> Query
         {
-            private readonly ParameterExpression _param;
-            public TypeModifier(ParameterExpression param)
-            {
-                _param = param;
-            }
-
-            public Expression Go(Expression expression)
-            {
-                return Visit(expression);
-            }
-
-            protected override Expression VisitParameter(ParameterExpression p)
-            {
-                return ((p.Type.Equals(typeof(TInput)) || (p.Type.Equals(typeof(IIdEntity)))) && p.Name.Equals(_param.Name)) ? _param : base.VisitParameter(p);
-            }
+            get { return new QueryableProxy<TEntity, TInterface>(AcroDataContext, Queryable); }
         }
-
-        protected IEnumerable<TEntity> GetFilteredReal(IQueryable<TEntity> queryable, Expression<Func<TInterface, bool>> predicate, Expression<Func<TInterface, object>> orderPredicate, bool orderAscending)
-        {
-            var originalPredicate = GetRealPredicate<TInterface, TEntity, bool>(predicate);
-            var originalOrderPredicate = GetRealPredicate<TInterface, TEntity, object>(orderPredicate);
-            var collection = predicate == null ? queryable : (queryable.Where(originalPredicate));
-            if (orderPredicate != null)
-            {
-                if (orderAscending)
-                    collection.OrderBy(originalOrderPredicate.Compile());
-                else
-                    collection.OrderByDescending(originalOrderPredicate.Compile());
-            }
-            return collection;
-        }
-
-        protected static Expression<Func<TOutput, TParamType>> GetRealPredicate<TInput, TOutput, TParamType>(Expression<Func<TInput, TParamType>> predicate)
-        {
-            if (predicate == null)
-                return null;
-            var param = Expression.Parameter(typeof(TOutput), predicate.Parameters[0].Name);
-            var temp = (Expression<Func<TInput, TParamType>>)(new TypeModifier<TInput>(param)).Go(predicate);
-            return Expression.Lambda<Func<TOutput, TParamType>>(temp.Body, new[] { param });
-        }
-        #endregion
     }
 }
