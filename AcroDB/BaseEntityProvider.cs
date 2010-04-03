@@ -35,19 +35,16 @@ namespace AcroDB
         protected abstract bool Insert(TInterface instanceOfEntity);
         protected abstract bool Update(TInterface instanceOfEntity);
 
-        protected static Guid GetEntityId(TInterface instanceOfEntity)
-        {
-            return ((IIdEntity)instanceOfEntity).GetEntityId();
-        }
         public virtual TInterface Create()
         {
-            return new TEntity();
+            return new TEntity {DataContextProvider = AcroDataContext};
         }
         public virtual bool Save(TInterface instanceOfEntity)
         {
-            if (!Guid.Empty.Equals(GetEntityId(instanceOfEntity)))
+            var e = (TEntity) instanceOfEntity;
+            if (!e.GetEntityId().Equals(default(Guid)))
                 return Update(instanceOfEntity);
-            ((IIdEntity) instanceOfEntity).SetEntityId(Guid.NewGuid());
+            e.SetEntityId(Guid.NewGuid());
             return Insert(instanceOfEntity);
         }
         public virtual bool Delete(Guid id)
